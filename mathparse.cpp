@@ -25,40 +25,47 @@ using namespace std;
 class Equation
 {
 public:
-    Equation(std::list<string> rpn);
-    unordered_map<string, shared_ptr<double>> args;
+    Equation(string eq, bool rpn);
+    int setarg(char arg, double val);
+    int getarg(char arg, double& val);
+
     double exec();
+    void printInfix();
+    void printPN();
+    void printRPN();
 
 private:
+    unordered_map<string, shared_ptr<double>> args;
+
+    list<string> tokenize(string exp);
+    list<string> infixreorder(list<string> exp);
 
     // function that has been bound to have no arguments
     function<double()> executor;
+    list<string> m_rpn;
+
 };
-
-void printInfix(std::list<string> rpn);
-list<string> tokenize(string exp);
-list<string> infixreorder(list<string> exp);
-
+    
 unordered_map<string,int> PRIORITY({{"exp", 5}, {"cos", 5}, {"sin", 5},
-        {"tan", 5}, {"log", 5}, {"+", 3}, {"-",3}, {"*", 4},
-        {"/", 4}, {"==", 2}, {"^", 6}});
+            {"tan", 5}, {"log", 5}, {"+", 3}, {"-",3}, {"*", 4},
+            {"/", 4}, {"==", 2}, {"^", 6}});
 
-unordered_map<string,function<double(double)>> UNARY({
-        {"exp",pointer_to_unary_function<double,double>(exp)},
-        {"cos",pointer_to_unary_function<double,double>(cos)},
-        {"sin",pointer_to_unary_function<double,double>(sin)},
-        {"tan",pointer_to_unary_function<double,double>(tan)},
-        {"neg",std::negate<double>()},
-        {"log",pointer_to_unary_function<double,double>(log)}});
+    unordered_map<string,function<double(double)>> UNARY({
+            {"exp",pointer_to_unary_function<double,double>(exp)},
+            {"cos",pointer_to_unary_function<double,double>(cos)},
+            {"sin",pointer_to_unary_function<double,double>(sin)},
+            {"tan",pointer_to_unary_function<double,double>(tan)},
+            {"neg",std::negate<double>()},
+            {"log",pointer_to_unary_function<double,double>(log)}});
 
-unordered_map<string,function<double(double,double)>> BINARY({
-        {"+",std::plus<double>()},
-        {"-",std::minus<double>()},
-        {"*",std::multiplies<double>()},
-        {"/",std::divides<double>()},
-        {"==",std::equal_to<double>()},
-        {"^",pointer_to_binary_function<double,double,double>(std::pow<double>)}
-        });
+    unordered_map<string,function<double(double,double)>> BINARY({
+            {"+",std::plus<double>()},
+            {"-",std::minus<double>()},
+            {"*",std::multiplies<double>()},
+            {"/",std::divides<double>()},
+            {"==",std::equal_to<double>()},
+            {"^",pointer_to_binary_function<double,double,double>(std::pow<double>)}
+            });
 
 
 int main(int argc, char** argv)
@@ -67,18 +74,47 @@ int main(int argc, char** argv)
         cerr << "Need 1 argument: an equation" << endl;
         return -1;
     }
-    auto tokens = tokenize(argv[1]);
-    auto rpn = infixreorder(tokens);
-    cerr << "RPN:";
-    for(auto it = rpn.begin(); it != rpn.end(); it++) {
-        cerr << " " << *it;;
-    }
-    cerr << endl;
-    printInfix(rpn);
-    Equation func(rpn);
+    Equation func(string(argv[1]), true);
+    func.printInfix();
+    func.printRPN();
+    func.printPN();
+
+    func.setarg('a', 10);
+    cerr << func.exec() << endl;
+    
+    func.setarg('a', 20);
+    cerr << func.exec() << endl;
 }
 
-list<string> infixreorder(list<string> tokens) 
+int Equation::getarg(char arg, double& val)
+{
+    string c = " ";
+    c[0] = arg;
+    auto it = args.find(c);
+    if(it == args.end()) {
+        cerr << arg << " not found in equation!" << endl;
+        return -1;
+    }
+    val = *it->second;
+
+    return 0;
+}
+
+int Equation::setarg(char arg, double val)
+{
+    string c = " ";
+    c[0] = arg;
+    auto it = args.find(c);
+    if(it == args.end()) {
+        cerr << arg << " not found in equation!" << endl;
+        return -1;
+    }
+    *it->second = val;
+
+    return 0;
+}
+
+list<string> Equation::infixreorder(list<string> tokens) 
 {
     list<string> opstack;
     list<string> outqueue;
@@ -163,10 +199,28 @@ list<string> infixreorder(list<string> tokens)
     return outqueue;
 }
 
-void printInfix(std::list<string> rpn)
+void Equation::printPN()
+{
+    cerr << "PN:";
+	for(auto it = m_rpn.rbegin(); it != m_rpn.rend(); it++) {
+        cerr << " " << *it;
+    }
+    cerr << endl;
+}
+
+void Equation::printRPN()
+{
+    cerr << "RPN:";
+	for(auto it = m_rpn.begin(); it != m_rpn.end(); it++) {
+        cerr << " " << *it;
+    }
+    cerr << endl;
+}
+
+void Equation::printInfix()
 {
     list<string> stack;
-	for(auto it = rpn.begin(); it != rpn.end(); it++) {
+    for(auto it = m_rpn.begin(); it != m_rpn.end(); it++) {
         string tok = *it;
         if(BINARY.count(tok))  {
             string lhs, rhs;
@@ -191,27 +245,36 @@ void printInfix(std::list<string> rpn)
     }
     if(stack.size() != 1) 
         throw INVALID_ARGUMENT("Extra Arguments Left on Stack");
-    cerr << "INF:" << stack.back() << endl;
+    cerr << "INFIX:" << stack.back() << endl;
 }
 
-Equation::Equation(std::list<string> rpn)
+double Equation::exec()
 {
-	using namespace std::placeholders;
-    
+    return executor();
+}
+
+Equation::Equation(string eq, bool rpn)
+{
+    auto tokens = tokenize(eq);
+    if(!rpn) 
+        m_rpn = tokens;
+    else
+        m_rpn = infixreorder(tokens);
+
     args.clear();
     function<double()> lhs;
     function<double()> rhs;
     pair<unordered_map<string,shared_ptr<double>>::iterator, bool> inserted;
 
     list<function<double()>> stack;
-	for(auto it = rpn.begin(); it != rpn.end(); it++) {
+    for(auto it = m_rpn.begin(); it != m_rpn.end(); it++) {
         string tok = *it;
         if(BINARY.count(tok))  {
 
             // pull out left and right hand sides
             if(stack.size() < 2) 
                 throw INVALID_ARGUMENT("Not Enough Arguments!");
-            
+
             // RHS 
             rhs = stack.back();
             stack.pop_back();
@@ -282,11 +345,10 @@ Equation::Equation(std::list<string> rpn)
         }
     }
 	
-    cerr << stack.size() << endl;
-    cerr << stack.back()() << endl;
+    executor = stack.back();
 }
 
-list<string> tokenize(string exp)
+list<string> Equation::tokenize(string exp)
 {
     cerr << "Equation: " << exp << endl;
     bool restart = true; // restart loop
