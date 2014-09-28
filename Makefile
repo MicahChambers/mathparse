@@ -1,3 +1,3 @@
 
 mathparse: mathparse.cpp
-	c++ mathparse.cpp -o mathparse -std=c++11
+	clang++ mathparse.cpp -o mathparse -std=c++11
