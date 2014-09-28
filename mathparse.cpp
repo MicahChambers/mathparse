@@ -26,12 +26,10 @@ class Equation
 {
 public:
     Equation(std::list<string> rpn);
-    unordered_map<string, double*> args;
+    unordered_map<string, shared_ptr<double>> args;
     double exec();
 
 private:
-    // holds the true values that are bound in the executor
-    list<double> values;
 
     // function that has been bound to have no arguments
     function<double()> executor;
@@ -189,6 +187,7 @@ int main(int argc, char** argv)
     }
     cerr << endl;
     printInfix(outqueue);
+    Equation func(outqueue);
 }
 
 void printInfix(std::list<string> rpn)
@@ -222,166 +221,122 @@ void printInfix(std::list<string> rpn)
     cerr << "INF:" << stack.back() << endl;
 }
 
-//string randstr() 
-//{
-//    static const char alphanum[] =
-//        "0123456789"
-//        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-//        "abcdefghijklmnopqrstuvwxyz";
-//
-//    const int LEN = 32;
-//    std::uniform_int_distribution<int> dist(0, sizeof(alphanum)-1);
-//
-//    string out(LEN, 'a');
-//    out[0] = 'k';
-//    for (int i = 1; i < out.size(); ++i) {
-//        out[i] = alphanum[dist(rng)];
-//    }
-//    return out;
-//}
-//
-//Equation::Equation(std::list<string> rpn)
-//{
-//	using namespace std::placeholders;
-//    
-//    args.clear();
-//    values.clear();
-//    double* rhs_ptr = NULL;
-//    double* lhs_ptr = NULL;
-//    double* ret_ptr = NULL;
-//    char* endptr;
-//    tuple<double*, string, function<void()>> lhs;
-//    tuple<double*, string, function<void()>> rhs;
-//    pair<unordered_map<string,double*>::iterator, bool> inserted;
-//
-//    list<tuple<double*, string, function<void()>>> stack;
-//	for(auto it = rpn.begin(); it != rpn.end(); it++) {
-//        string tok = *it;
-//        if(BINARY.count(tok))  {
-//
-//            // pull out left and right hand sides
-//            if(stack.size() < 2) 
-//                throw INVALID_ARGUMENT("Not Enough Arguments!");
-//            
-//            // RHS 
-//            auto rhs = stack.back();
-//            stack.pop_back();
-//            if(get<0>(rhs)) {
-//                // already have this variable somewhere
-//                rhs_ptr = get<0>(rhs);
-//            } else {
-//                // need to create it
-//                auto inserted = args.insert({get<1>(rhs), NULL});
-//                if(inserted.second == true) {
-//                    values.push_back(0);
-//                    rhs_ptr = &values.back();
-//                    inserted.first->second = rhs_ptr;
-//                } else {
-//                    rhs_ptr = inserted.first->second;
-//                }
-//            }
-//            
-//            // LHS
-//            auto lhs = stack.back();
-//            stack.pop_back();
-//            if(get<0>(lhs)) {
-//                // already have this variable somewhere
-//                lhs_ptr = get<0>(lhs);
-//            } else {
-//                // need to create it
-//                auto inserted = args.insert({get<1>(lhs), NULL});
-//                if(inserted.second == true) {
-//                    values.push_back(0);
-//                    lhs_ptr = &values.back();
-//                    inserted.first->second = lhs_ptr;
-//                } else {
-//                    lhs_ptr = inserted.first->second;
-//                }
-//            }
-//            
-//            // create output in args map
-//            {
-//            values.push_back(0);
-//            auto inserted = args.insert({randstr(), NULL});
-//            assert(inserted.second);
-//            ret_ptr = &values.back();
-//            inserted.first->second = ret_ptr;
-//
-//            // push onto the stack so that we can get it later
-//            stack.push_back(make_tuple(
-//                    ret_ptr, inserted.first->first,
-//                    [lhs, rhs, ret_ptr, tok](){
-//                        cerr << *get<0>(lhs) << tok << *get<0>(rhs) << endl;
-//                        get<2>(lhs)(); // compute lhs value
-//                        get<2>(rhs)(); // compute rhs value
-//                        *ret_ptr = BINARY[tok](*get<0>(lhs), *get<0>(rhs)); // compute this
-//                    }));
-//            }
-//
-//        } else if(UNARY.count(tok)) {
-//            // pull out left and right hand sides
-//            if(stack.size() < 1) 
-//                throw INVALID_ARGUMENT("Not Enough Arguments!");
-//            
-//            // LHS
-//            rhs = stack.back();
-//            stack.pop_back();
-//            if(get<0>(rhs)) {
-//                // already have this variable somewhere
-//                rhs_ptr = get<0>(rhs);
-//            } else {
-//                // need to create it
-//                auto inserted = args.insert({get<1>(rhs), NULL});
-//                if(inserted.second == true) {
-//                    values.push_back(0);
-//                    inserted.first->second = &values.back();
-//                    rhs_ptr = inserted.first->second;
-//                } else {
-//                    rhs_ptr = inserted.first->second;
-//                }
-//            }
-//            
-//            // create output in args map
-//            {
-//            values.push_back(0);
-//            auto inserted = args.insert({randstr(), NULL});
-//            assert(inserted.second);
-//            ret_ptr = &values.back();
-//            inserted.first->second = ret_ptr;
-//
-//            // push onto the stack so that we can get it later
-//            stack.push_back(make_tuple(ret_ptr, inserted.first->first,
-//                    [rhs, ret_ptr, tok](){
-//                        cerr << tok << *get<0>(rhs) << endl;
-//                        get<2>(rhs)(); // compute rhs value
-//                        *ret_ptr = UNARY[tok](*get<0>(rhs)); // compute this
-//                    }));
-//            }
-//        } else {
-//            double* tmp = NULL;
-//            stack.push_back(make_tuple(tmp,tok,[](){ } ));
-//        }
-//
-//        cerr << "----" << endl;
-//        for(auto it=stack.begin(); it != stack.end(); ++it) {
-//            cerr << get<0>(*it) << " | " << get<1>(*it) << endl;   
-//        }
-//        cerr << "^^^^" << endl;
-//    }
-//	
-//    // turn numeric literals into actual variables
-//    for(auto it=args.begin(); it != args.end(); ++it) {
-//        double v = strtod(it->first.c_str(), &endptr);
-//        if(it->first.c_str() != endptr) {
-//            cerr << "Converted " << it->first << " to " << v << endl;
-//            *it->second = v;
-//        }
-//    }
-//
-//    cerr << stack.size() << endl;
-//    get<2>(stack.back())();
-//    cerr << *get<0>(stack.back()) << endl;
-//}
+string randstr() 
+{
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    const int LEN = 32;
+    std::uniform_int_distribution<int> dist(0, sizeof(alphanum)-1);
+
+    string out(LEN, 'a');
+    out[0] = 'k';
+    for (int i = 1; i < out.size(); ++i) {
+        out[i] = alphanum[dist(rng)];
+    }
+    return out;
+}
+
+bool isnumeric(string str)
+{
+    regex re("[+-]?\\d*(?:.\\d*)?(?:e[+-]?\\d*)?(?:.\\d*)?");
+    cerr << "[+-]?\\d*(?:.\\d*)?(?:e[+-]?\\d*)?(?:.\\d*)?" << endl;
+    cerr << str << endl;
+    if(regex_match(str.begin(), str.end(), re)) {
+        cerr << "matches" << endl;
+        return true;
+    }
+    return false;
+}
+
+Equation::Equation(std::list<string> rpn)
+{
+	using namespace std::placeholders;
+    
+    args.clear();
+    char* endptr;
+    function<double()> lhs;
+    function<double()> rhs;
+    pair<unordered_map<string,shared_ptr<double>>::iterator, bool> inserted;
+
+    list<function<double()>> stack;
+	for(auto it = rpn.begin(); it != rpn.end(); it++) {
+        string tok = *it;
+        if(BINARY.count(tok))  {
+
+            // pull out left and right hand sides
+            if(stack.size() < 2) 
+                throw INVALID_ARGUMENT("Not Enough Arguments!");
+            
+            // RHS 
+            rhs = stack.back();
+            stack.pop_back();
+            
+            // LHS
+            lhs = stack.back();
+            stack.pop_back();
+            
+            // push onto the stack so that we can get it later
+            stack.push_back(
+                        [lhs, rhs, tok](){
+                            return BINARY[tok](lhs(), rhs()); 
+                        });
+
+        } else if(UNARY.count(tok)) {
+            // pull out left and right hand sides
+            if(stack.size() < 1) 
+                throw INVALID_ARGUMENT("Not Enough Arguments!");
+           
+            // LHS
+            auto lhs = stack.back();
+            stack.pop_back();
+            
+            // push onto the stack so that we can get it later
+            stack.push_back(
+                        [lhs, tok](){
+                            return UNARY[tok](lhs()); 
+                        });
+            
+        } else {
+            function<double()> foo;
+            if(args.count(tok) > 0) {
+                // bind this
+                auto tmp = args[tok];
+                cerr << "tok=" << tmp << endl;
+                foo = [tmp, tok]() 
+                { 
+                    cerr << tok << " " << tmp << " " << *tmp << endl;
+                    return *tmp; 
+                };
+            } else if(isnumeric(tok)) {
+                // 
+                double tmp = atof(tok.c_str());
+                cerr << "const tok=" << tmp << endl;
+                foo = [tmp, tok]() 
+                { 
+                    cerr << "const tok " << tok << " " << tmp << endl;
+                    return tmp; 
+                };
+            } else {
+                // need to create it
+                args[tok].reset(new double);
+                auto tmp = args[tok];
+                cerr << "new tok=" << tmp << endl;
+                foo = [tmp, tok]() 
+                { 
+                    cerr << tok << " " << tmp << " " << *tmp << endl;
+                    return *tmp; 
+                };
+            }
+            stack.push_back(foo);
+        }
+    }
+	
+    cerr << stack.size() << endl;
+    cerr << stack.back()() << endl;
+}
 
 void explainRegexError(std::regex_error& e)
 {
