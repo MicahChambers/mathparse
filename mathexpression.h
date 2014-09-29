@@ -2,12 +2,13 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <functional>
 #include <list>
 
 /**
  * @brief Class for parsing and evaluating math equations from text.
  */
-class Equation
+class MathExpression
 {
 public:
 
@@ -19,7 +20,7 @@ public:
      * @param rpn if true, then the equation is assumed to be
      * Reverse-Polish-Notation
      */
-    Equation(string eq, bool rpn = false);
+    MathExpression(std::string eq, bool rpn = false);
 
     /**
      * @brief Sets variable (argument in the math equation
@@ -62,14 +63,14 @@ public:
     /**
      * @brief Print the expression as polish notation (PN)
      */
-    void printRPN();
+    void printPN();
 
     /**
      * @brief Get an iterator for the the map of variables 
      *
      * @return Iterator that goes through the variables
      */
-    std::unordered_map<std::string>::iterator begin()
+    std::unordered_map<std::string,std::shared_ptr<double>>::iterator begin()
     {
         return args.begin(); 
     };
@@ -79,7 +80,7 @@ public:
      *
      * @return Iterator, at end of variable map
      */
-    std::unordered_map<std::string>::iterator end()
+    std::unordered_map<std::string,std::shared_ptr<double>>::iterator end()
     {
         return args.end(); 
     };
@@ -89,7 +90,7 @@ public:
      *
      * @return Iterator that goes through the variables
      */
-    std::unordered_map<std::string>::const_iterator cbegin()
+    std::unordered_map<std::string,std::shared_ptr<double>>::const_iterator cbegin()
     {
         return args.cbegin(); 
     };
@@ -99,7 +100,7 @@ public:
      *
      * @return Iterator, at end of variable map
      */
-    std::unordered_map<std::string>::const_iterator cend()
+    std::unordered_map<std::string,std::shared_ptr<double>>::const_iterator cend()
     {
         return args.cend(); 
     };
@@ -117,7 +118,7 @@ private:
      *
      * @return list of tokens
      */
-    list<string> tokenize(string exp);
+    std::list<std::string> tokenize(std::string exp);
 
     /**
      * @brief Helper function that reorder tokens based on their priority
@@ -127,17 +128,17 @@ private:
      *
      * @return list of tokens, now in RPN
      */
-    list<string> infixreorder(list<string> exp);
+    std::list<std::string> infixreorder(std::list<std::string> exp);
 
     /**
      * @brief Function that  calls math equations
      */
-    function<double()> executor;
+    std::function<double()> executor;
 
     /**
-     * @brief Equation stored in RPN format. Mostly just for printing.
+     * @brief MathExpression stored in RPN format. Mostly just for printing.
      */
-    list<string> m_rpn;
+    std::list<std::string> m_rpn;
 
 };
     

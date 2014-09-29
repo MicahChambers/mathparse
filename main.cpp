@@ -1,5 +1,9 @@
 
-#include "mathparse.h"
+#include "mathexpression.h"
+
+#include <iostream>
+
+using namespace std;
 
 int main(int argc, char** argv)
 {
@@ -7,7 +11,7 @@ int main(int argc, char** argv)
         cerr << "Need 1 argument: an equation" << endl;
         return -1;
     }
-    Equation func(string(argv[1]), true);
+    MathExpression func(string(argv[1]), true);
     func.printInfix();
     func.printRPN();
     func.printPN();

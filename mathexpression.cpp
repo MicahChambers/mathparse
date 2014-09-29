@@ -1,12 +1,13 @@
+
+#include "mathexpression.h"
+
 #include <string>
 #include <iostream>
 #include <unordered_map>
 #include <cmath>
 #include <functional>
-#include <numeric>
 #include <cstdlib>
 #include <list>
-//#include <algorithm>
 #include <cassert>
 #include <random>
 #include <memory>
@@ -23,7 +24,7 @@ using namespace std;
 
 unordered_map<string,int> PRIORITY({{"exp", 5}, {"cos", 5}, {"sin", 5},
         {"tan", 5}, {"log", 5}, {"+", 3}, {"-",3}, {"*", 4},
-        {"/", 4}, {"==", 2}, {"^", 6}});
+        {"/", 4}, {"==", 2}, {"^", 6}, {"neg", 7}});
 
 unordered_map<string,function<double(double)>> UNARY({
         {"exp",pointer_to_unary_function<double,double>(exp)},
@@ -50,7 +51,7 @@ unordered_map<string,function<double(double,double)>> BINARY({
  * @param rpn if true, then the equation is assumed to be
  * Reverse-Polish-Notation
  */
-Equation::Equation(string eq, bool rpn)
+MathExpression::MathExpression(string eq, bool rpn)
 {
     auto tokens = tokenize(eq);
     if(!rpn) 
@@ -153,7 +154,7 @@ Equation::Equation(string eq, bool rpn)
  *
  * @return error if != 0
  */
-int Equation::setarg(char arg, double val)
+int MathExpression::setarg(char arg, double val)
 {
     string c = " ";
     c[0] = arg;
@@ -175,7 +176,7 @@ int Equation::setarg(char arg, double val)
  *
  * @return error if != 0
  */
-int Equation::getarg(char arg, double& val)
+int MathExpression::getarg(char arg, double& val)
 {
     string c = " ";
     c[0] = arg;
@@ -194,7 +195,7 @@ int Equation::getarg(char arg, double& val)
  *
  * @return 
  */
-double Equation::exec()
+double MathExpression::exec()
 {
     return executor();
 }
@@ -202,7 +203,7 @@ double Equation::exec()
 /**
  * @brief Print the expression as polish notation (PN)
  */
-void Equation::printPN()
+void MathExpression::printPN()
 {
     cerr << "PN:";
 	for(auto it = m_rpn.rbegin(); it != m_rpn.rend(); it++) {
@@ -214,7 +215,7 @@ void Equation::printPN()
 /**
  * @brief Print the expression as reverse-polish notation (RPN)
  */
-void Equation::printRPN()
+void MathExpression::printRPN()
 {
     cerr << "RPN:";
     for(auto it = m_rpn.begin(); it != m_rpn.end(); it++) {
@@ -226,7 +227,7 @@ void Equation::printRPN()
 /**
  * @brief Print the expression as infix
  */
-void Equation::printInfix()
+void MathExpression::printInfix()
 {
     list<string> stack;
     for(auto it = m_rpn.begin(); it != m_rpn.end(); it++) {
@@ -265,9 +266,9 @@ void Equation::printInfix()
  *
  * @return list of tokens
  */
-list<string> Equation::tokenize(string exp)
+list<string> MathExpression::tokenize(string exp)
 {
-    cerr << "Equation: " << exp << endl;
+    cerr << "MathExpression: " << exp << endl;
     bool restart = true; // restart loop
     list<string> out;
     string singlechar = " ";
@@ -325,7 +326,7 @@ list<string> Equation::tokenize(string exp)
  *
  * @return list of tokens, now in RPN
  */
-list<string> Equation::infixreorder(list<string> tokens) 
+list<string> MathExpression::infixreorder(list<string> tokens) 
 {
     list<string> opstack;
     list<string> outqueue;
