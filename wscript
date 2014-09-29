@@ -55,7 +55,10 @@ def options(ctx):
     
 def build(bld):
     # recurse into other wscript files
-    bld.shlib(source="mathexpression.cpp", target="mathexpression");
+    bld.shlib(
+            source="mathexpression.cpp", 
+            target="mathexpression"
+    );
     bld.program(
             source="test1.cpp", 
             target="test1", 
