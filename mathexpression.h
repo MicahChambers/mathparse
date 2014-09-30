@@ -78,6 +78,12 @@ public:
      * @brief Print the expression as reverse-polish notation (RPN)
      */
     void printRPN();
+
+    /**
+     * @brief Randomly assign each of the arguments, execute the function and
+     * return the result.
+     */
+    void randomTest();
     
     /**
      * @brief Print the expression as polish notation (PN)
@@ -160,5 +166,10 @@ private:
     std::list<std::string> m_rpn;
 
 };
-    
+
+
+/**
+ * @brief Lists all the operations available.
+ */
+void listops();
 

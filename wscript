@@ -57,6 +57,7 @@ def build(bld):
     # recurse into other wscript files
     bld.shlib(
             source="mathexpression.cpp", 
+            export_includes = ['.'],
             target="mathexpression"
     );
     bld.program(

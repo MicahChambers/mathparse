@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <functional>
+#include <iomanip>
 #include <cstdlib>
 #include <list>
 #include <cassert>
@@ -41,9 +42,10 @@ std::default_random_engine rng;
 using namespace std;
 
 
-unordered_map<string,int> PRIORITY({{"exp", 5}, {"cos", 5}, {"sin", 5},
-        {"tan", 5}, {"log", 5}, {"+", 3}, {"-",3}, {"*", 4},
-        {"/", 4}, {"==", 2}, {"^", 6}, {"neg", 7}});
+unordered_map<string,int> PRIORITY({{"exp", 5}, {"cos", 5}, {"sin", 5}, {"tan",
+        5}, {"log", 5}, {"+", 3}, {"-",3}, {"*", 4}, {"/", 4}, {"==", 2}, {"^",
+        6}, {"neg", 7}, {"<=", 2}, {">=", 2}, {"<", 2}, {">", 2}, {"ceil", 5},
+        {"abs", 5}, {"round", 5}, {"floor", 5}});
 
 unordered_map<string,function<double(double)>> UNARY({
         {"exp",pointer_to_unary_function<double,double>(exp)},
@@ -51,6 +53,10 @@ unordered_map<string,function<double(double)>> UNARY({
         {"sin",pointer_to_unary_function<double,double>(sin)},
         {"tan",pointer_to_unary_function<double,double>(tan)},
         {"neg",std::negate<double>()},
+        {"abs",pointer_to_unary_function<double,double>(abs)},
+        {"round",pointer_to_unary_function<double,double>(round)},
+        {"floor",pointer_to_unary_function<double,double>(floor)},
+        {"ceil",pointer_to_unary_function<double,double>(ceil)},
         {"log",pointer_to_unary_function<double,double>(log)}});
 
 unordered_map<string,function<double(double,double)>> BINARY({
@@ -59,8 +65,21 @@ unordered_map<string,function<double(double,double)>> BINARY({
         {"*",std::multiplies<double>()},
         {"/",std::divides<double>()},
         {"==",std::equal_to<double>()},
+        {"<", std::less<double>()},
+        {">",std::greater<double>()},
+        {"<=", std::less_equal<double>()},
+        {">=",std::greater_equal<double>()},
         {"^",pointer_to_binary_function<double,double,double>(std::pow<double>)}
         });
+
+void listops()
+{
+    cerr << '\t' << left << setw(6) << "Op" << setw(10) << "Priority" << endl;
+    for(auto it=PRIORITY.begin(); it != PRIORITY.end(); ++it) {
+        cerr << '\t' << left << setw(6) << it->first << setw(10) << it->second << endl;
+    }
+    cerr << endl;
+}
 
 /**
  * @brief Constructor.
@@ -218,6 +237,20 @@ double MathExpression::exec()
 {
     return executor();
 }
+
+void MathExpression::randomTest()
+{
+    cerr << "Equation: ";
+    printInfix();
+    cerr << "Using: \n";
+    for(auto it=args.begin(); it != args.end(); ++it) {
+        *it->second = rand();
+        cerr << it->first << "=" << *it->second << endl;
+    }
+    
+    cerr << "Eval: " << exec() << endl;
+}
+
 
 /**
  * @brief Print the expression as polish notation (PN)
