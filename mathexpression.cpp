@@ -92,7 +92,7 @@ void listops()
 MathExpression::MathExpression(string eq, bool rpn)
 {
     auto tokens = tokenize(eq);
-    if(!rpn) 
+    if(rpn) 
         m_rpn = tokens;
     else
         m_rpn = infixreorder(tokens);
