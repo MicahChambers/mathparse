@@ -124,7 +124,9 @@ MathExpression::MathExpression(string eq, bool rpn)
                     [lhs, rhs, tok](){
                     double lhsv = lhs();
                     double rhsv = rhs();
-                    cerr << lhsv << tok << rhsv << endl;
+#ifdef VERYDEBUG
+                    cerr << lhsv << tok << rhsv << "=" << BINARY[tok](lhsv, rhsv) << endl;
+#endif 
                     return BINARY[tok](lhsv, rhsv); 
                     });
 
@@ -141,7 +143,9 @@ MathExpression::MathExpression(string eq, bool rpn)
             stack.push_back(
                     [lhs, tok](){
                     double lhsv = lhs();
-                    cerr << tok << lhsv << endl;
+#ifdef VERYDEBUG
+                    cerr << tok << lhsv << "=" << UNARY[tok](lhsv) << endl;
+#endif
                     return UNARY[tok](lhsv); 
                     });
 
@@ -151,29 +155,41 @@ MathExpression::MathExpression(string eq, bool rpn)
             double v = strtod(tok.c_str(), &end);
             if((end - tok.c_str()) == (int)tok.size()) {
                 // number 
+#ifdef VERYDEBUG
                 cerr << "const tok=" << v << endl;
+#endif
                 foo = [v, tok]() 
                 { 
+#ifdef VERYDEBUG
                     cerr << "const tok " << tok << " " << v << endl;
+#endif
                     return v; 
                 };
             } else if(args.count(tok) > 0) {
                 // bind this
                 auto tmp = args[tok];
+#ifdef VERYDEBUG
                 cerr << "tok=" << tmp << endl;
+#endif
                 foo = [tmp, tok]() 
                 { 
+#ifdef VERYDEBUG
                     cerr << tok << " " << tmp << " " << *tmp << endl;
+#endif
                     return *tmp; 
                 };
             } else {
                 // need to create it
                 args[tok].reset(new double);
                 auto tmp = args[tok];
+#ifdef VERYDEBUG
                 cerr << "new tok=" << tmp << endl;
+#endif
                 foo = [tmp, tok]() 
                 { 
+#ifdef VERYDEBUG
                     cerr << tok << " " << tmp << " " << *tmp << endl;
+#endif
                     return *tmp; 
                 };
             }
@@ -244,7 +260,7 @@ void MathExpression::randomTest()
     printInfix();
     cerr << "Using: \n";
     for(auto it=args.begin(); it != args.end(); ++it) {
-        *it->second = rand();
+        *it->second = rand()/(double)RAND_MAX-.5;
         cerr << it->first << "=" << *it->second << endl;
     }
     
