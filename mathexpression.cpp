@@ -375,7 +375,7 @@ list<string> MathExpression::tokenize(string exp)
         char* end;
         strtod(&exp.c_str()[ii], &end);
         if(end == &exp.c_str()[ii]) {
-            throw INVALID_ARGUMENT("Unknown character: "+exp[ii]);
+            throw INVALID_ARGUMENT("Unknown character: "+to_string(exp[ii]));
         } else {
             size_t len = ((end-&exp.c_str()[ii]));
             out.push_back(exp.substr(ii, len));
