@@ -214,7 +214,7 @@ int MathExpression::setarg(char arg, double val)
     c[0] = arg;
     auto it = args.find(c);
     if(it == args.end()) {
-        cerr << arg << " not found in equation!" << endl;
+//        cerr << arg << " not found in equation!" << endl;
         return -1;
     }
     *it->second = val;
@@ -236,7 +236,7 @@ int MathExpression::getarg(char arg, double& val)
     c[0] = arg;
     auto it = args.find(c);
     if(it == args.end()) {
-        cerr << arg << " not found in equation!" << endl;
+//        cerr << arg << " not found in equation!" << endl;
         return -1;
     }
     val = *it->second;
