@@ -406,7 +406,6 @@ list<string> MathExpression::infixreorder(list<string> tokens)
     bool prevarg = false;
     for(auto it=tokens.begin(); it != tokens.end(); ++it) {
         string tok = *it;
-        cerr << tok << endl;
         if(impliedmult && tok != ")" && (tok == "(" || BINARY.count(tok) == 0)) {
             while(!opstack.empty()) {
                 // Go ahead and evaluate higher PRIORITY operators before
