@@ -44,8 +44,8 @@ using namespace std;
 
 unordered_map<string,int> PRIORITY({{"exp", 5}, {"cos", 5}, {"sin", 5}, {"tan",
         5}, {"log", 5}, {"+", 3}, {"-",3}, {"*", 4}, {"/", 4}, {"==", 2}, {"^",
-        6}, {"neg", 7}, {"<=", 2}, {">=", 2}, {"<", 2}, {">", 2}, {"ceil", 5},
-        {"abs", 5}, {"round", 5}, {"floor", 5}});
+        6}, {"neg", 7}, {"<=", 2}, {">=", 2}, {"<", 2}, {">", 2}, {"|", 1},
+		{"&", 1}, {"ceil", 5}, {"abs", 5}, {"round", 5}, {"floor", 5}});
 
 unordered_map<string,function<double(double)>> UNARY({
         {"exp",pointer_to_unary_function<double,double>(exp)},
@@ -69,7 +69,9 @@ unordered_map<string,function<double(double,double)>> BINARY({
         {">",std::greater<double>()},
         {"<=", std::less_equal<double>()},
         {">=",std::greater_equal<double>()},
-        {"^",pointer_to_binary_function<double,double,double>(std::pow<double>)}
+        {"^",pointer_to_binary_function<double,double,double>(std::pow<double>)},
+        {"&",std::logical_and<double>()},
+        {"|",std::logical_or<double>()}
         });
 
 void listops()
@@ -85,14 +87,14 @@ void listops()
  * @brief Constructor.
  *
  * @param eq String represntation of equation. Infix format unless rpn is
- * true 
+ * true
  * @param rpn if true, then the equation is assumed to be
  * Reverse-Polish-Notation
  */
 MathExpression::MathExpression(string eq, bool rpn)
 {
     auto tokens = tokenize(eq);
-    if(rpn) 
+    if(rpn)
         m_rpn = tokens;
     else
         m_rpn = infixreorder(tokens);
@@ -108,10 +110,10 @@ MathExpression::MathExpression(string eq, bool rpn)
         if(BINARY.count(tok))  {
 
             // pull out left and right hand sides
-            if(stack.size() < 2) 
+            if(stack.size() < 2)
                 throw INVALID_ARGUMENT("Not Enough Arguments!");
 
-            // RHS 
+            // RHS
             rhs = stack.back();
             stack.pop_back();
 
@@ -126,13 +128,13 @@ MathExpression::MathExpression(string eq, bool rpn)
                     double rhsv = rhs();
 #ifdef VERYDEBUG
                     cerr << lhsv << tok << rhsv << "=" << BINARY[tok](lhsv, rhsv) << endl;
-#endif 
-                    return BINARY[tok](lhsv, rhsv); 
+#endif
+                    return BINARY[tok](lhsv, rhsv);
                     });
 
         } else if(UNARY.count(tok)) {
             // pull out left and right hand sides
-            if(stack.size() < 1) 
+            if(stack.size() < 1)
                 throw INVALID_ARGUMENT("Not Enough Arguments!");
 
             // LHS
@@ -146,7 +148,7 @@ MathExpression::MathExpression(string eq, bool rpn)
 #ifdef VERYDEBUG
                     cerr << tok << lhsv << "=" << UNARY[tok](lhsv) << endl;
 #endif
-                    return UNARY[tok](lhsv); 
+                    return UNARY[tok](lhsv);
                     });
 
         } else {
@@ -154,16 +156,16 @@ MathExpression::MathExpression(string eq, bool rpn)
             char* end = NULL;
             double v = strtod(tok.c_str(), &end);
             if((end - tok.c_str()) == (int)tok.size()) {
-                // number 
+                // number
 #ifdef VERYDEBUG
                 cerr << "const tok=" << v << endl;
 #endif
-                foo = [v, tok]() 
-                { 
+                foo = [v, tok]()
+                {
 #ifdef VERYDEBUG
                     cerr << "const tok " << tok << " " << v << endl;
 #endif
-                    return v; 
+                    return v;
                 };
             } else if(args.count(tok) > 0) {
                 // bind this
@@ -171,12 +173,12 @@ MathExpression::MathExpression(string eq, bool rpn)
 #ifdef VERYDEBUG
                 cerr << "tok=" << tmp << endl;
 #endif
-                foo = [tmp, tok]() 
-                { 
+                foo = [tmp, tok]()
+                {
 #ifdef VERYDEBUG
                     cerr << tok << " " << tmp << " " << *tmp << endl;
 #endif
-                    return *tmp; 
+                    return *tmp;
                 };
             } else {
                 // need to create it
@@ -185,12 +187,12 @@ MathExpression::MathExpression(string eq, bool rpn)
 #ifdef VERYDEBUG
                 cerr << "new tok=" << tmp << endl;
 #endif
-                foo = [tmp, tok]() 
-                { 
+                foo = [tmp, tok]()
+                {
 #ifdef VERYDEBUG
                     cerr << tok << " " << tmp << " " << *tmp << endl;
 #endif
-                    return *tmp; 
+                    return *tmp;
                 };
             }
             stack.push_back(foo);
@@ -199,7 +201,7 @@ MathExpression::MathExpression(string eq, bool rpn)
 
     executor = stack.back();
 }
-    
+
 /**
  * @brief Sets variable (argument in the math equation
  *
@@ -225,7 +227,7 @@ int MathExpression::setarg(char arg, double val)
 /**
  * @brief return the current value of a named argument in val
  *
- * @param arg Input, argument to check the value of 
+ * @param arg Input, argument to check the value of
  * @param val Return value
  *
  * @return error if != 0
@@ -247,7 +249,7 @@ int MathExpression::getarg(char arg, double& val)
 /**
  * @brief Performs the expression and returns the result
  *
- * @return 
+ * @return
  */
 double MathExpression::exec()
 {
@@ -263,7 +265,7 @@ void MathExpression::randomTest()
         *it->second = rand()/(double)RAND_MAX-.5;
         cerr << it->first << "=" << *it->second << endl;
     }
-    
+
     cerr << "Eval: " << exec() << endl;
 }
 
@@ -302,7 +304,7 @@ void MathExpression::printInfix()
         string tok = *it;
         if(BINARY.count(tok))  {
             string lhs, rhs;
-            if(stack.size() < 2) 
+            if(stack.size() < 2)
                 throw INVALID_ARGUMENT("Not Enough Arguments!");
             rhs = stack.back();
             stack.pop_back();
@@ -321,7 +323,7 @@ void MathExpression::printInfix()
             stack.push_back(tok);
         }
     }
-    if(stack.size() != 1) 
+    if(stack.size() != 1)
         throw INVALID_ARGUMENT("Extra Arguments Left on Stack");
     cerr << "INFIX:" << stack.back() << endl;
 }
@@ -344,6 +346,7 @@ list<string> MathExpression::tokenize(string exp)
         restart = false;
         while(ii < exp.length() && isspace(exp[ii]))
             ii++;
+        if(ii == exp.length()) continue;
 
         if(exp[ii] == ')' || exp[ii] == '(') {
             singlechar[0] = exp[ii];
@@ -394,7 +397,7 @@ list<string> MathExpression::tokenize(string exp)
  *
  * @return list of tokens, now in RPN
  */
-list<string> MathExpression::infixreorder(list<string> tokens) 
+list<string> MathExpression::infixreorder(list<string> tokens)
 {
     list<string> opstack;
     list<string> outqueue;
@@ -406,7 +409,7 @@ list<string> MathExpression::infixreorder(list<string> tokens)
         cerr << tok << endl;
         if(impliedmult && tok != ")" && (tok == "(" || BINARY.count(tok) == 0)) {
             while(!opstack.empty()) {
-                // Go ahead and evaluate higher PRIORITY operators before 
+                // Go ahead and evaluate higher PRIORITY operators before
                 // the current
                 if(PRIORITY["*"] <= PRIORITY[opstack.front()]) {
                     outqueue.push_back(opstack.front());
@@ -439,14 +442,14 @@ list<string> MathExpression::infixreorder(list<string> tokens)
         } else if(PRIORITY.count(tok) > 0) {
             // check for prefix +-
             if(!prevarg && tok == "+") {
-                // ignore + prefix 
+                // ignore + prefix
             } else if(!prevarg && tok == "-") {
                 // prefix negate has highest PRIORITY
                 opstack.push_front("neg");
             } else {
                 // Add latest operator to stack until we find lower PRIORITY op
                 while(!opstack.empty()) {
-                    // Go ahead and evaluate higher PRIORITY operators before 
+                    // Go ahead and evaluate higher PRIORITY operators before
                     // the current
                     if(PRIORITY[tok] <= PRIORITY[opstack.front()]) {
                         outqueue.push_back(opstack.front());
@@ -470,7 +473,7 @@ list<string> MathExpression::infixreorder(list<string> tokens)
 
     // Copy last operators to output queue
     while(!opstack.empty()) {
-        if(opstack.front() == "(") 
+        if(opstack.front() == "(")
             throw INVALID_ARGUMENT("Error, unmatched parentheses remaining");
         outqueue.push_back(opstack.front());
         opstack.pop_front();
